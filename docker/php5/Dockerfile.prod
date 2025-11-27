@@ -1,0 +1,39 @@
+FROM php:5.6-apache
+
+# Обновляем источники пакетов для использования архивов Debian
+RUN echo "deb http://archive.debian.org/debian stretch main contrib non-free" > /etc/apt/sources.list && \
+    echo "deb http://archive.debian.org/debian-security stretch/updates main contrib non-free" >> /etc/apt/sources.list && \
+    echo "Acquire::Check-Valid-Until false;" > /etc/apt/apt.conf.d/10-nocheckvalid && \
+    echo 'APT::Get::AllowUnauthenticated "true";' > /etc/apt/apt.conf.d/10-allow-unauthenticated
+
+# Установка зависимостей
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
+    && docker-php-ext-install gd mysqli mysql pdo pdo_mysql
+
+# Настройка безопасности PHP
+RUN { \
+    echo 'expose_php = Off'; \
+    echo 'display_errors = Off'; \
+    echo 'log_errors = On'; \
+    echo 'error_log = /var/log/php_errors.log'; \
+    echo 'disable_functions = exec,passthru,shell_exec,system'; \
+} > /usr/local/etc/php/conf.d/security.ini
+
+# Настройка Apache
+RUN a2enmod rewrite && \
+    a2dismod cgi -f && \
+    a2dismod autoindex -f
+
+COPY .htaccess /var/www/html/.htaccess
+
+# Настройка документа Apache
+ENV APACHE_DOCUMENT_ROOT /var/www/html
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
+    sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+WORKDIR /var/www/html
