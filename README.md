@@ -1,9 +1,9 @@
 # Docker info
-docker --version
-     Docker version 20.10.21, build 20.10.21-0ubuntu1~20.04.2
+     docker --version
+**Docker version 20.10.21, build 20.10.21-0ubuntu1~20.04.2**
 
-docker-compose --version
-     docker-compose version 1.29.2, build 5becea4c
+     docker-compose --version
+**docker-compose version 1.29.2, build 5becea4c**
 
 # Build and run
      docker-compose -f docker-compose.local.yml up -d --build
